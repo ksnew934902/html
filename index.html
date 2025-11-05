@@ -173,7 +173,7 @@
             </div>
           </div>
         </div>
-        <div id="line" class="line" hidden></div>
+        
         <div class="controls" style="justify-content: space-between;">
           <small>Keyboard: arrows/WASD to move, Enter/Space to place</small>
           <small id="turnHint">Turn: X</small>
@@ -244,7 +244,7 @@
     };
 
     const boardEl = $('#board');
-    const lineEl = $('#line');
+    let lineEl = document.getElementById('line');
     const statusMsg = $('#statusMsg');
     const turnHint = $('#turnHint');
 
@@ -269,13 +269,21 @@
         if(!state.started) btn.setAttribute('disabled','');
         boardEl.appendChild(btn);
       }
-      // starter overlay
       const overlay = document.createElement('div');
       overlay.id = 'starter';
       overlay.className = 'starter';
       overlay.innerHTML = `<div class="panel"><div style="margin-bottom:10px; font-weight:800;">Ready to play?</div><button class="btn primary" id="startOverlay" type="button">Start Game</button></div>`;
       if(state.started) overlay.style.display = 'none';
       boardEl.appendChild(overlay);
+      // ensure win line inside board
+      if(!document.getElementById('line')){
+        const l = document.createElement('div');
+        l.id = 'line';
+        l.className = 'line';
+        l.hidden = true;
+        boardEl.appendChild(l);
+      }
+      lineEl = document.getElementById('line');
       $('#startOverlay')?.addEventListener('click', startGame);
       render();
     }
@@ -341,11 +349,17 @@
 
     // Minimax with alpha-beta
     function bestMove(board, player){
-      // Opening heuristic: take center if available (proven optimal)
-      if(board.every(v => v === null) && board[4] === null) return 4;
       const opponent = (p)=> p==='X' ? 'O' : 'X';
-      let best = { score: -Infinity, move: null };
-      for(const m of available(board)){
+      const avail = available(board);
+      // 1) Immediate win
+      for(const m of avail){ const b = board.slice(); b[m] = player; if(checkWinner(b).winner === player) return m; }
+      // 2) Immediate block
+      for(const m of avail){ const b = board.slice(); b[m] = opponent(player); if(checkWinner(b).winner === opponent(player)) return m; }
+      // 3) Opening heuristic: center
+      if(board.every(v => v === null) && board[4] === null) return 4;
+      // 4) Minimax fallback
+      let best = { score: -Infinity, move: avail[0] ?? null };
+      for(const m of avail){
         const b = board.slice(); b[m] = player;
         const score = minimax(b, false, player, opponent(player), -Infinity, Infinity, 1);
         if(score > best.score){ best = { score, move: m }; }
@@ -391,7 +405,7 @@
 
     function drawWinLine(line){
       if(!line){ lineEl.hidden = true; return; }
-      const pos = idx => boardEl.children[idx].getBoundingClientRect();
+      const pos = idx => $$('.cell', boardEl)[idx].getBoundingClientRect();
       const b = boardEl.getBoundingClientRect();
       const pts = line.map(i=>{ const r = pos(i); return { x: r.left + r.width/2 - b.left, y: r.top + r.height/2 - b.top }; });
       pts.sort((p,q)=> (p.x+p.y)-(q.x+q.y));
