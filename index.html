@@ -125,6 +125,7 @@
     /* Overlay before game starts */
     .starter { display:flex; align-items:center; justify-content:center; position: absolute; inset:0; border-radius: 18px; background: rgba(0,0,0,.35); backdrop-filter: blur(2px); }
     .starter .panel { background: var(--bg); border: 1px solid rgba(255,255,255,.12); padding: 18px 18px; border-radius: 14px; box-shadow: var(--shadow); text-align:center; }
+  .board.finished .cell:hover{ transform:none; }
   </style>
 </head>
 <body>
@@ -317,9 +318,9 @@
       return {winner:null, line:null};
     }
 
-    function handleMove(i){
+    function handleMove(i, isAI = false){
       if(!state.started) return;
-      if(state.lock || state.winner || state.board[i]) return;
+      if((state.lock && !isAI) || state.winner || state.board[i]) return;
       const mark = state.xIsNext ? 'X' : 'O';
       state.board[i] = mark;
       state.history.push({ index:i, player:mark });
@@ -334,10 +335,13 @@
       // AI move if needed
       const mode = $('#mode').value;
       if(mode==='ai' && currentPlayer()===state.aiMark){
-        state.lock = true; // simulate thinking
+        state.lock = true; // lock human input while AI "thinks"
         setTimeout(()=>{
           const move = ($('#difficulty').value==='hard') ? bestMove(state.board, state.aiMark) : randomMove(state.board);
-          if(move!=null){ handleMove(move); }
+          state.lock = false;
+          if(move!=null){ handleMove(move, true); }
+        }, 220);
+      }
           state.lock = false;
         }, 220);
       }
@@ -398,6 +402,7 @@
       if(winner==='T'){ statusMsg.textContent = "Draw! Nobody wins."; state.scores.T++; }
       else { statusMsg.textContent = `${winner} wins!`; if (winner === 'X') { state.scores.X++; } else { state.scores.O++; } }
       storage.set('ttt:scores', state.scores);
+      boardEl.classList.add('finished');
       drawWinLine(line);
       updateScores();
       render();
@@ -405,15 +410,20 @@
 
     function drawWinLine(line){
       if(!line){ lineEl.hidden = true; return; }
-      const pos = idx => $$('.cell', boardEl)[idx].getBoundingClientRect();
-      const b = boardEl.getBoundingClientRect();
-      const pts = line.map(i=>{ const r = pos(i); return { x: r.left + r.width/2 - b.left, y: r.top + r.height/2 - b.top }; });
-      pts.sort((p,q)=> (p.x+p.y)-(q.x+q.y));
-      const a = pts[0], c = pts[2];
-      const dx = c.x - a.x, dy = c.y - a.y; const len = Math.hypot(dx,dy);
-      const angle = Math.atan2(dy, dx) * 180/Math.PI;
-      Object.assign(lineEl.style, { left: `${a.x}px`, top: `${a.y}px`, width: `${len}px`, transform: `rotate(${angle}deg)` });
-      lineEl.hidden = false;
+      // Wait a frame so layout/hover transforms settle
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          const cells = $$('.cell', boardEl);
+          const pos = idx => cells[idx].getBoundingClientRect();
+          const b = boardEl.getBoundingClientRect();
+          const pts = line.map(i=>{ const r = pos(i); return { x: r.left + r.width/2 - b.left, y: r.top + r.height/2 - b.top }; });
+          const a = pts[0], c = pts[2];
+          const dx = c.x - a.x, dy = c.y - a.y; const len = Math.hypot(dx,dy);
+          const angle = Math.atan2(dy, dx) * 180/Math.PI;
+          Object.assign(lineEl.style, { left: `${a.x}px`, top: `${a.y}px`, width: `${len}px`, transform: `rotate(${angle}deg)` });
+          lineEl.hidden = false;
+        });
+      });
     }
 
     function updateScores(){
@@ -464,10 +474,15 @@
     function reset(){
       state.board = Array(9).fill(null);
       state.xIsNext = true; state.history = []; state.winner = null; state.line = null;
-      lineEl.hidden = true; render();
+      lineEl.hidden = true; boardEl.classList.remove('finished'); render();
       const mode = $('#mode').value;
-      if(mode==='ai' && state.started && state.playerMark==='O'){ // AI plays first if human is O
-        state.lock = true; setTimeout(()=>{ const mv = bestMove(state.board, state.aiMark); if(mv!=null) handleMove(mv); state.lock = false; }, 200);
+      if(mode==='ai' && state.started && state.playerMark==='O'){
+        // AI (X) should start
+        setTimeout(()=>{
+          const mv = bestMove(state.board, state.aiMark);
+          if(mv!=null) handleMove(mv, true);
+        }, 10);
+      }, 200);
       }
     }
 
@@ -494,8 +509,9 @@
 
     $('#clearScores').addEventListener('click', ()=>{ state.scores = {X:0,O:0,T:0}; storage.set('ttt:scores', state.scores); updateScores(); });
     $('#swapMarks').addEventListener('click', ()=>{
+      const oldPlayer = state.playerMark;
       [state.playerMark, state.aiMark] = [state.aiMark, state.playerMark];
-      statusMsg.textContent = `You are now ${state.playerMark}.`;
+      statusMsg.textContent = `You are now ${state.playerMark} (was ${oldPlayer}).`;
       if(state.started) reset();
     });
 
