@@ -248,6 +248,12 @@
     const statusMsg = $('#statusMsg');
     const turnHint = $('#turnHint');
 
+    // Keep status text in sync
+    function updateStatus(){
+      if(!state.started){ statusMsg.textContent = 'Press Start to begin. X goes first.'; return; }
+      if(!state.winner){ statusMsg.textContent = `Your move: ${currentPlayer()}`; }
+    }
+
     // ===== Build Board =====
     function buildBoard(){
       boardEl.innerHTML = '';
@@ -335,22 +341,24 @@
 
     // Minimax with alpha-beta
     function bestMove(board, player){
+      // Opening heuristic: take center if available (proven optimal)
+      if(board.every(v => v === null) && board[4] === null) return 4;
       const opponent = (p)=> p==='X' ? 'O' : 'X';
       let best = { score: -Infinity, move: null };
       for(const m of available(board)){
         const b = board.slice(); b[m] = player;
-        const score = minimax(b, false, player, opponent(player), -Infinity, Infinity);
+        const score = minimax(b, false, player, opponent(player), -Infinity, Infinity, 1);
         if(score > best.score){ best = { score, move: m }; }
       }
       return best.move;
     }
 
-    function minimax(board, isMax, ai, human, alpha, beta){
+    function minimax(board, isMax, ai, human, alpha, beta, depth=0){
       const res = checkWinner(board);
       if(res.winner){
-        if(res.winner===ai) return 10;
+        if(res.winner===ai) return 10 - depth; // prefer faster wins
         if(res.winner==='T') return 0;
-        return -10;
+        return depth - 10; // prefer delaying losses
       }
       if(isMax){
         let best = -Infinity;
