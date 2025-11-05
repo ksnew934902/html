@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tic‑Tac‑Toe • Advanced One‑Pager</title>
-  <meta name="description" content="Beautiful one‑page Tic‑Tac‑Toe with Start button, PvP/AI, easy/hard AI, undo, history, animated win line, keyboard, theming, and self‑tests." />
+  <title>Tic‑Tac‑Toe • Advanced One‑Pager (Fixed)</title>
+  <meta name="description" content="One‑page Tic‑Tac‑Toe with Start overlay, PvP/AI, easy/hard AI, undo, history, animated win line, keyboard, theming, persistence, and self‑tests." />
   <style>
     :root {
       --bg: #0b1020;
@@ -14,8 +14,6 @@
       --primary: #7c93ff;
       --primary-2: #a7ffde;
       --accent: #ff9bd1;
-      --win: #a7ffde;
-      --lose: #ffb4b4;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
       --radius: 22px;
       --control-bg: rgba(255,255,255,.06);
@@ -29,14 +27,11 @@
       --primary: #4256ff;
       --primary-2: #0bb;
       --accent: #d32cff;
-      --win: #0bb;
-      --lose: #ff4d4f;
       --shadow: 0 8px 24px rgba(20,20,40,.12);
       --control-bg: rgba(0,0,0,.06);
       --control-bg-hover: rgba(0,0,0,.12);
     }
 
-    /* --- Global layout --- */
     html, body { height: 100%; }
     body {
       margin: 0;
@@ -55,27 +50,19 @@
 
     .container { max-width: 1200px; margin-inline: auto; padding: 24px; }
 
-    /* --- Header / Hero --- */
     header.hero { position: relative; padding: 64px 0 32px; text-align: center; overflow: hidden; }
-    .orbital {
-      position: absolute; inset: -20vh -10vw auto auto; height: 70vh; width: 70vh;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 60%),
-                  radial-gradient(circle at 70% 70%, rgba(255,255,255,.05), transparent 60%);
-      border-radius: 50%; filter: blur(20px); opacity: .6; pointer-events: none; animation: float 18s ease-in-out infinite;
-    }
+    .orbital { position: absolute; inset: -20vh -10vw auto auto; height: 70vh; width: 70vh; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 60%), radial-gradient(circle at 70% 70%, rgba(255,255,255,.05), transparent 60%); border-radius: 50%; filter: blur(20px); opacity: .6; pointer-events: none; animation: float 18s ease-in-out infinite; }
     @keyframes float { 0%,100%{ transform: translateY(-6px) rotate(0deg); } 50%{ transform: translateY(6px) rotate(10deg);} }
 
     h1.title { font-size: clamp(2rem, 5vw, 4rem); margin: 0 0 12px; letter-spacing: .5px; }
     p.subtitle { margin: 0 auto; max-width: 900px; color: var(--muted); }
 
-    /* --- Glass cards --- */
     .card { background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
     .grid { display: grid; gap: 24px; grid-template-columns: repeat(12, 1fr); align-items: start; margin-top: 32px; }
     .span-7 { grid-column: span 7; }
     .span-5 { grid-column: span 5; }
     @media (max-width: 1000px){ .span-7, .span-5 { grid-column: 1 / -1; } }
 
-    /* --- Controls --- */
     .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin: 18px 0 10px; }
     .btn, .select { appearance: none; border: 1px solid rgba(255,255,255,.2); background: var(--control-bg); color: var(--text); padding: 10px 14px; border-radius: 14px; font-weight: 600; box-shadow: var(--shadow); cursor: pointer; transition: .25s ease; outline: none; min-height: 42px; }
     .btn:hover, .select:hover { transform: translate(0, -2px); box-shadow: 0 14px 34px rgba(0,0,0,.28); background: var(--control-bg-hover); }
@@ -91,7 +78,6 @@
     .switch input:checked { background: linear-gradient(135deg, var(--primary), var(--primary-2)); }
     .switch input:checked::after { transform: translateX(22px); }
 
-    /* --- Game --- */
     .game-card { padding: 22px; }
     .status { display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap: wrap; }
     .status .msg { font-weight: 700; letter-spacing: .3px; }
@@ -103,10 +89,8 @@
 
     .cell .mark { filter: drop-shadow(0 6px 12px rgba(0,0,0,.35)); background: radial-gradient(circle at 50% 35%, #fff, #ddd); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-    .line { position: absolute; height: 6px; background: linear-gradient(90deg, var(--accent), var(--primary-2)); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.35); transform-origin: left center; animation: sweep .55s ease forwards; opacity: 0; filter: saturate(1.2); }
-    @keyframes sweep { from { width: 0; opacity: 0; } to { width: 100%; opacity: 1; } }
+    .line { position: absolute; height: 8px; background: linear-gradient(90deg, var(--accent), var(--primary-2)); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.35); transform-origin: left center; opacity: 0; transition: opacity .25s ease; pointer-events: none; }
 
-    /* --- Sidebar --- */
     .sidebar { padding: 20px; position: sticky; top: 20px; }
     .kpi { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
     .kpi .pill { padding: 14px; text-align: center; border-radius: 14px; background: var(--surface); border: 1px solid rgba(255,255,255,.12); }
@@ -115,17 +99,16 @@
     .history { max-height: 280px; overflow: auto; padding-right: 6px; }
     .history button { width: 100%; text-align:left; margin: 6px 0; }
 
-    /* --- Sections --- */
     section { margin: 56px 0; }
     h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 8px; }
     p.lead { color: var(--muted); }
 
     footer { margin: 72px 0 24px; text-align: center; color: var(--muted); }
 
-    /* Overlay before game starts */
     .starter { display:flex; align-items:center; justify-content:center; position: absolute; inset:0; border-radius: 18px; background: rgba(0,0,0,.35); backdrop-filter: blur(2px); }
     .starter .panel { background: var(--bg); border: 1px solid rgba(255,255,255,.12); padding: 18px 18px; border-radius: 14px; box-shadow: var(--shadow); text-align:center; }
-  .board.finished .cell:hover{ transform:none; }
+
+    .board.finished .cell:hover { transform: none; }
   </style>
 </head>
 <body>
@@ -133,7 +116,7 @@
   <header class="hero">
     <div class="container">
       <h1 class="title">Tic‑Tac‑Toe, Reimagined</h1>
-      <p class="subtitle">A gorgeous, single‑page experience with an advanced on‑page game: PvP & AI, undo & history, win‑line animations, keyboard play, theming, and persistent scores. Built with vanilla HTML, CSS, and JavaScript.</p>
+      <p class="subtitle">A gorgeous, single‑page experience with an advanced on‑page game: PvP & AI, undo & history, win‑line animations, keyboard play, theming, and persistent scores.</p>
       <div class="controls" aria-label="Global controls">
         <label class="switch" title="Toggle light/dark theme">
           <span>Theme</span>
@@ -146,7 +129,6 @@
 
   <main class="container">
     <div class="grid">
-      <!-- Game Column -->
       <section class="span-7 card game-card" aria-label="Tic Tac Toe game">
         <div class="status">
           <div class="msg" id="statusMsg">Press Start to begin. X goes first.</div>
@@ -165,23 +147,13 @@
           </div>
         </div>
 
-        <div class="board" id="board" role="grid" aria-label="Tic Tac Toe board">
-          <!-- Cells injected by JS for clean markup -->
-          <div id="starter" class="starter" aria-hidden="true">
-            <div class="panel">
-              <div style="margin-bottom:10px; font-weight:800;">Ready to play?</div>
-              <button class="btn primary" id="startOverlay" type="button">Start Game</button>
-            </div>
-          </div>
-        </div>
-        
+        <div class="board" id="board" role="grid" aria-label="Tic Tac Toe board"></div>
         <div class="controls" style="justify-content: space-between;">
           <small>Keyboard: arrows/WASD to move, Enter/Space to place</small>
           <small id="turnHint">Turn: X</small>
         </div>
       </section>
 
-      <!-- Sidebar Column -->
       <aside class="span-5 card sidebar" aria-label="Game summary and history">
         <h2>Scoreboard</h2>
         <div class="kpi">
@@ -201,19 +173,7 @@
 
     <section>
       <h2>How to Play</h2>
-      <p class="lead">Get three in a row — horizontally, vertically, or diagonally. Click or use the keyboard to place your mark. Play with a friend or challenge the computer on Easy (a bit clumsy) or Hard (ruthless with minimax + alpha‑beta pruning).</p>
-    </section>
-
-    <section>
-      <h2>Highlights</h2>
-      <ul>
-        <li>Beautiful glassmorphism UI with light/dark theme.</li>
-        <li>Smooth win‑line animation and responsive layout.</li>
-        <li>Undo & full move history with jump‑to state.</li>
-        <li>Sticky sidebar scoreboard with persistence via localStorage.</li>
-        <li>Keyboard accessibility and ARIA roles.</li>
-        <li>Self‑tests for core logic (see console).</li>
-      </ul>
+      <p class="lead">Get three in a row. Play with a friend or challenge the computer (Easy/Hard). Keyboard supported.</p>
     </section>
 
     <footer>
@@ -223,175 +183,162 @@
 
   <script>
     // ===== Utilities =====
-    const $ = (sel, root = document) => root.querySelector(sel);
-    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const $ = function(sel, root){ return (root||document).querySelector(sel); };
+    const $$ = function(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); };
     const storage = {
-      get(key, fallback){ try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback } },
-      set(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+      get: function(key, fallback){ try { var v = JSON.parse(localStorage.getItem(key)); return v==null?fallback:v; } catch(e){ return fallback; } },
+      set: function(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
     };
 
     // ===== Game State =====
-    const state = {
-      board: Array(9).fill(null),
+    var state = {
+      board: [null,null,null,null,null,null,null,null,null],
       xIsNext: true,
-      history: [], // {index, player}
+      history: [],
       winner: null,
       line: null,
-      lock: false, // prevent rapid clicks during AI move
+      lock: false,
       scores: storage.get('ttt:scores', { X:0, O:0, T:0 }),
-      playerMark: 'X', // human as X by default
+      playerMark: 'X', // human mark in AI mode
       aiMark: 'O',
-      started: false,
+      started: false
     };
 
-    const boardEl = $('#board');
-    let lineEl = document.getElementById('line');
-    const statusMsg = $('#statusMsg');
-    const turnHint = $('#turnHint');
+    var boardEl = $('#board');
+    var lineEl = null;
+    var statusMsg = $('#statusMsg');
+    var turnHint = $('#turnHint');
 
-    // Keep status text in sync
-    function updateStatus(){
-      if(!state.started){ statusMsg.textContent = 'Press Start to begin. X goes first.'; return; }
-      if(!state.winner){ statusMsg.textContent = `Your move: ${currentPlayer()}`; }
-    }
-
-    // ===== Build Board =====
+    // ===== Build Board & Overlay =====
     function buildBoard(){
       boardEl.innerHTML = '';
-      for(let i=0;i<9;i++){
-        const btn = document.createElement('button');
+      for(var i=0;i<9;i++){
+        var btn = document.createElement('button');
         btn.className = 'cell';
         btn.type = 'button';
         btn.setAttribute('role','gridcell');
-        btn.setAttribute('aria-label', `Cell ${i+1}`);
-        btn.dataset.index = i;
-        btn.addEventListener('click', () => handleMove(i));
-        btn.addEventListener('keydown', (e) => handleKey(e, i));
+        btn.setAttribute('aria-label','Cell '+(i+1));
+        (function(idx){
+          btn.addEventListener('click', function(){ handleMove(idx, false); });
+          btn.addEventListener('keydown', function(e){ handleKey(e, idx); });
+        })(i);
         if(!state.started) btn.setAttribute('disabled','');
         boardEl.appendChild(btn);
       }
-      const overlay = document.createElement('div');
+      // Starter overlay
+      var overlay = document.createElement('div');
       overlay.id = 'starter';
       overlay.className = 'starter';
-      overlay.innerHTML = `<div class="panel"><div style="margin-bottom:10px; font-weight:800;">Ready to play?</div><button class="btn primary" id="startOverlay" type="button">Start Game</button></div>`;
+      overlay.innerHTML = '<div class="panel"><div style="margin-bottom:10px; font-weight:800;">Ready to play?</div><button class="btn primary" id="startOverlay" type="button">Start Game</button></div>';
       if(state.started) overlay.style.display = 'none';
       boardEl.appendChild(overlay);
-      // ensure win line inside board
-      if(!document.getElementById('line')){
-        const l = document.createElement('div');
-        l.id = 'line';
-        l.className = 'line';
-        l.hidden = true;
-        boardEl.appendChild(l);
-      }
-      lineEl = document.getElementById('line');
-      $('#startOverlay')?.addEventListener('click', startGame);
+      var so = $('#startOverlay'); if(so) so.addEventListener('click', startGame);
+      // Win line inside board
+      var l = document.createElement('div'); l.id='line'; l.className='line'; l.style.opacity='0'; boardEl.appendChild(l);
+      lineEl = l;
       render();
     }
 
     function enableBoard(enabled){
-      $$('.cell', boardEl).forEach(cell => { if(enabled) cell.removeAttribute('disabled'); else cell.setAttribute('disabled',''); });
+      var cells = $$('.cell', boardEl);
+      for(var i=0;i<cells.length;i++){
+        if(enabled) cells[i].removeAttribute('disabled'); else cells[i].setAttribute('disabled','');
+      }
     }
 
     function handleKey(e, i){
-      const cols = 3; const rows = 3;
-      const r = Math.floor(i/cols), c = i%cols;
-      let ni = i;
-      if(['ArrowUp','w','W'].includes(e.key)) ni = ((r-1+rows)%rows)*cols + c;
-      else if(['ArrowDown','s','S'].includes(e.key)) ni = ((r+1)%rows)*cols + c;
-      else if(['ArrowLeft','a','A'].includes(e.key)) ni = r*cols + ((c-1+cols)%cols);
-      else if(['ArrowRight','d','D'].includes(e.key)) ni = r*cols + ((c+1)%cols);
-      else if(['Enter',' '].includes(e.key)) { e.preventDefault(); handleMove(i); return; }
-      if(ni!==i){ e.preventDefault(); const tgt = boardEl.children[ni]; tgt.focus(); }
+      var cols=3, rows=3; var r=Math.floor(i/cols), c=i%cols; var ni=i;
+      var k=e.key;
+      if(k==='ArrowUp'||k==='w'||k==='W') ni=((r-1+rows)%rows)*cols+c;
+      else if(k==='ArrowDown'||k==='s'||k==='S') ni=((r+1)%rows)*cols+c;
+      else if(k==='ArrowLeft'||k==='a'||k==='A') ni=r*cols+((c-1+cols)%cols);
+      else if(k==='ArrowRight'||k==='d'||k==='D') ni=r*cols+((c+1)%cols);
+      else if(k==='Enter'||k===' '){ e.preventDefault(); handleMove(i,false); return; }
+      if(ni!==i){ e.preventDefault(); var tgt=boardEl.children[ni]; if(tgt) tgt.focus(); }
     }
 
-    // ===== Game Logic =====
-    const wins = [ [0,1,2],[3,4,5],[6,7,8], [0,3,6],[1,4,7],[2,5,8], [0,4,8],[2,4,6] ];
-
-    function available(board){ return board.map((v,i)=>v?null:i).filter(v=>v!==null); }
-
+    var wins = [ [0,1,2],[3,4,5],[6,7,8], [0,3,6],[1,4,7],[2,5,8], [0,4,8],[2,4,6] ];
+    function available(board){ var out=[]; for(var i=0;i<9;i++){ if(!board[i]) out.push(i); } return out; }
     function checkWinner(board){
-      for(const [a,b,c] of wins){
-        if(board[a] && board[a]===board[b] && board[b]===board[c]) return {winner: board[a], line:[a,b,c]};
+      for(var w=0;w<wins.length;w++){
+        var a=wins[w][0], b=wins[w][1], c=wins[w][2];
+        if(board[a] && board[a]===board[b] && board[b]===board[c]) return { winner: board[a], line: [a,b,c] };
       }
-      if(board.every(Boolean)) return {winner:'T', line:null};
-      return {winner:null, line:null};
+      for(var i=0;i<9;i++){ if(!board[i]) return { winner:null, line:null }; }
+      return { winner:'T', line:null };
     }
 
-    function handleMove(i, isAI = false){
-      if(!state.started) return;
+    function currentPlayer(){ return state.xIsNext ? 'X' : 'O'; }
+
+    function handleMove(i, isAI){
       if((state.lock && !isAI) || state.winner || state.board[i]) return;
-      const mark = state.xIsNext ? 'X' : 'O';
+      var mark = state.xIsNext ? 'X' : 'O';
       state.board[i] = mark;
       state.history.push({ index:i, player:mark });
       state.xIsNext = !state.xIsNext;
       updateStatus();
 
-      const {winner, line} = checkWinner(state.board);
-      if(winner){ finishGame(winner, line); return; }
+      var res = checkWinner(state.board);
+      if(res.winner){ finishGame(res.winner, res.line); return; }
 
       render();
 
-      // AI move if needed
-      const mode = $('#mode').value;
+      var mode = $('#mode').value;
       if(mode==='ai' && currentPlayer()===state.aiMark){
-        state.lock = true; // lock human input while AI "thinks"
-        setTimeout(()=>{
-          const move = ($('#difficulty').value==='hard') ? bestMove(state.board, state.aiMark) : randomMove(state.board);
+        state.lock = true;
+        setTimeout(function(){
+          var mv = ($('#difficulty').value==='hard') ? bestMove(state.board, state.aiMark) : randomMove(state.board);
           state.lock = false;
-          if(move!=null){ handleMove(move, true); }
-        }, 220);
-      }
-          state.lock = false;
+          if(mv!=null) handleMove(mv, true);
         }, 220);
       }
     }
 
-    function currentPlayer(){ return state.xIsNext ? 'X' : 'O'; }
+    function updateStatus(){
+      if(!state.started){ statusMsg.textContent='Press Start to begin. X goes first.'; return; }
+      if(!state.winner){ statusMsg.textContent='Your move: '+currentPlayer(); }
+      turnHint.textContent='Turn: '+currentPlayer();
+    }
 
-    function randomMove(board){ const a = available(board); return a[Math.floor(Math.random()*a.length)] ?? null; }
+    function randomMove(board){ var a = available(board); return a.length? a[Math.floor(Math.random()*a.length)] : null; }
 
-    // Minimax with alpha-beta
     function bestMove(board, player){
-      const opponent = (p)=> p==='X' ? 'O' : 'X';
-      const avail = available(board);
-      // 1) Immediate win
-      for(const m of avail){ const b = board.slice(); b[m] = player; if(checkWinner(b).winner === player) return m; }
-      // 2) Immediate block
-      for(const m of avail){ const b = board.slice(); b[m] = opponent(player); if(checkWinner(b).winner === opponent(player)) return m; }
-      // 3) Opening heuristic: center
-      if(board.every(v => v === null) && board[4] === null) return 4;
-      // 4) Minimax fallback
-      let best = { score: -Infinity, move: avail[0] ?? null };
-      for(const m of avail){
-        const b = board.slice(); b[m] = player;
-        const score = minimax(b, false, player, opponent(player), -Infinity, Infinity, 1);
-        if(score > best.score){ best = { score, move: m }; }
+      var opp = player==='X'?'O':'X';
+      var a = available(board);
+      // 1) Win now
+      for(var i=0;i<a.length;i++){ var m=a[i]; var b=board.slice(); b[m]=player; if(checkWinner(b).winner===player) return m; }
+      // 2) Block now
+      for(i=0;i<a.length;i++){ m=a[i]; b=board.slice(); b[m]=opp; if(checkWinner(b).winner===opp) return m; }
+      // 3) Center
+      if(board[4]==null) return 4;
+      // 4) Minimax
+      var best={score:-999, move:a[0]};
+      for(i=0;i<a.length;i++){
+        m=a[i]; b=board.slice(); b[m]=player;
+        var s = minimax(b, false, player, opp, -999, 999, 1);
+        if(s>best.score){ best.score=s; best.move=m; }
       }
       return best.move;
     }
 
-    function minimax(board, isMax, ai, human, alpha, beta, depth=0){
-      const res = checkWinner(board);
-      if(res.winner){
-        if(res.winner===ai) return 10 - depth; // prefer faster wins
-        if(res.winner==='T') return 0;
-        return depth - 10; // prefer delaying losses
-      }
+    function minimax(board, isMax, ai, human, alpha, beta, depth){
+      var r = checkWinner(board);
+      if(r.winner){ if(r.winner===ai) return 10-depth; if(r.winner==='T') return 0; return depth-10; }
+      var a = available(board);
       if(isMax){
-        let best = -Infinity;
-        for(const m of available(board)){
-          const b = board.slice(); b[m] = ai;
-          const score = minimax(b, false, ai, human, alpha, beta);
-          best = Math.max(best, score); alpha = Math.max(alpha, best); if(beta<=alpha) break;
+        var best=-999;
+        for(var i=0;i<a.length;i++){
+          var m=a[i]; var b=board.slice(); b[m]=ai;
+          var sc = minimax(b, false, ai, human, alpha, beta, depth+1);
+          if(sc>best) best=sc; if(best>alpha) alpha=best; if(beta<=alpha) break;
         }
         return best;
       } else {
-        let best = Infinity;
-        for(const m of available(board)){
-          const b = board.slice(); b[m] = human;
-          const score = minimax(b, true, ai, human, alpha, beta);
-          best = Math.min(best, score); beta = Math.min(beta, best); if(beta<=alpha) break;
+        best=999;
+        for(i=0;i<a.length;i++){
+          m=a[i]; b=board.slice(); b[m]=human;
+          sc = minimax(b, true, ai, human, alpha, beta, depth+1);
+          if(sc<best) best=sc; if(best<beta) beta=best; if(beta<=alpha) break;
         }
         return best;
       }
@@ -399,8 +346,8 @@
 
     function finishGame(winner, line){
       state.winner = winner; state.line = line;
-      if(winner==='T'){ statusMsg.textContent = "Draw! Nobody wins."; state.scores.T++; }
-      else { statusMsg.textContent = `${winner} wins!`; if (winner === 'X') { state.scores.X++; } else { state.scores.O++; } }
+      if(winner==='T'){ statusMsg.textContent='Draw! Nobody wins.'; state.scores.T++; }
+      else { statusMsg.textContent=winner+' wins!'; if(winner==='X'){ state.scores.X++; } else { state.scores.O++; } }
       storage.set('ttt:scores', state.scores);
       boardEl.classList.add('finished');
       drawWinLine(line);
@@ -409,128 +356,121 @@
     }
 
     function drawWinLine(line){
-      if(!line){ lineEl.hidden = true; return; }
-      // Wait a frame so layout/hover transforms settle
-      requestAnimationFrame(()=>{
-        requestAnimationFrame(()=>{
-          const cells = $$('.cell', boardEl);
-          const pos = idx => cells[idx].getBoundingClientRect();
-          const b = boardEl.getBoundingClientRect();
-          const pts = line.map(i=>{ const r = pos(i); return { x: r.left + r.width/2 - b.left, y: r.top + r.height/2 - b.top }; });
-          const a = pts[0], c = pts[2];
-          const dx = c.x - a.x, dy = c.y - a.y; const len = Math.hypot(dx,dy);
-          const angle = Math.atan2(dy, dx) * 180/Math.PI;
-          Object.assign(lineEl.style, { left: `${a.x}px`, top: `${a.y}px`, width: `${len}px`, transform: `rotate(${angle}deg)` });
-          lineEl.hidden = false;
+      if(!line){ if(lineEl){ lineEl.style.opacity='0'; } return; }
+      // Wait two frames so layout settles
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          var cells = $$('.cell', boardEl);
+          var a = cells[line[0]].getBoundingClientRect();
+          var c = cells[line[2]].getBoundingClientRect();
+          var bRect = boardEl.getBoundingClientRect();
+          var ax = a.left + a.width/2 - bRect.left;
+          var ay = a.top + a.height/2 - bRect.top;
+          var cx = c.left + c.width/2 - bRect.left;
+          var cy = c.top + c.height/2 - bRect.top;
+          var dx = cx - ax; var dy = cy - ay; var len = Math.sqrt(dx*dx + dy*dy);
+          lineEl.style.left = ax + 'px';
+          lineEl.style.top = ay + 'px';
+          lineEl.style.width = len + 'px';
+          lineEl.style.transform = 'rotate(' + (Math.atan2(dy,dx)*180/Math.PI) + 'deg)';
+          lineEl.style.opacity = '1';
         });
       });
     }
 
     function updateScores(){
-      $('#scoreX').textContent = state.scores.X;
-      $('#scoreO').textContent = state.scores.O;
-      $('#scoreT').textContent = state.scores.T;
+      $('#scoreX').textContent = String(state.scores.X);
+      $('#scoreO').textContent = String(state.scores.O);
+      $('#scoreT').textContent = String(state.scores.T);
     }
 
     function render(){
-      state.board.forEach((v,i)=>{
-        const cell = boardEl.children[i];
-        if(!cell || !cell.classList.contains('cell')) return;
-        cell.innerHTML = v ? `<span class="mark" aria-hidden="true">${v}</span>` : '';
-        cell.setAttribute('aria-disabled', !!v);
-        if(v) cell.setAttribute('disabled',''); else cell.removeAttribute('disabled');
-        if(!state.started) cell.setAttribute('disabled','');
-      });
-      if(!state.winner){ statusMsg.textContent = state.started ? `Your move: ${currentPlayer()}` : 'Press Start to begin. X goes first.'; }
-      turnHint.textContent = `Turn: ${currentPlayer()}`;
+      var cells = $$('.cell', boardEl);
+      for(var i=0;i<9;i++){
+        var v = state.board[i]; var cell = cells[i];
+        cell.innerHTML = v ? '<span class="mark" aria-hidden="true">'+v+'</span>' : '';
+        cell.setAttribute('aria-disabled', v? 'true':'false');
+        if(v || !state.started) cell.setAttribute('disabled',''); else cell.removeAttribute('disabled');
+      }
+      if(!state.winner){ statusMsg.textContent = state.started ? ('Your move: '+currentPlayer()) : 'Press Start to begin. X goes first.'; }
+      turnHint.textContent = 'Turn: ' + currentPlayer();
       renderHistory();
     }
 
     function renderHistory(){
-      const root = $('#history');
+      var root = $('#history');
       root.innerHTML = '';
-      state.history.forEach((m, idx)=>{
-        const b = document.createElement('button');
-        b.className = 'btn ghost';
-        b.type = 'button';
-        b.textContent = `${idx+1}. ${m.player} at ${cellName(m.index)}`;
-        b.addEventListener('click', ()=> jumpTo(idx));
+      for(var i=0;i<state.history.length;i++){
+        var m = state.history[i];
+        var b = document.createElement('button'); b.className='btn ghost'; b.type='button';
+        b.textContent = (i+1)+'. '+m.player+' at R'+(Math.floor(m.index/3)+1)+'C'+((m.index%3)+1);
+        (function(idx){ b.addEventListener('click', function(){ jumpTo(idx); }); })(i);
         root.appendChild(b);
-      });
+      }
     }
-    function cellName(i){ const r = Math.floor(i/3)+1, c = i%3+1; return `R${r}C${c}`; }
 
     function jumpTo(histIndex){
-      state.board = Array(9).fill(null);
-      const moves = state.history.slice(0, histIndex+1);
-      moves.forEach(m=> state.board[m.index] = m.player );
-      state.xIsNext = (moves.length % 2 === 0) ? true : false;
-      state.winner = null; state.line = null; lineEl.hidden = true;
+      state.board = [null,null,null,null,null,null,null,null,null];
+      var moves = state.history.slice(0, histIndex+1);
+      for(var i=0;i<moves.length;i++){ var mv=moves[i]; state.board[mv.index]=mv.player; }
+      state.xIsNext = (moves.length % 2 === 0);
+      state.winner = null; state.line = null; if(lineEl) lineEl.style.opacity='0'; boardEl.classList.remove('finished');
       state.history = moves;
       render();
     }
 
     // ===== Controls =====
     function reset(){
-      state.board = Array(9).fill(null);
+      state.board = [null,null,null,null,null,null,null,null,null];
       state.xIsNext = true; state.history = []; state.winner = null; state.line = null;
-      lineEl.hidden = true; boardEl.classList.remove('finished'); render();
-      const mode = $('#mode').value;
+      if(lineEl) lineEl.style.opacity='0'; boardEl.classList.remove('finished');
+      render();
+      var mode = $('#mode').value;
       if(mode==='ai' && state.started && state.playerMark==='O'){
-        // AI (X) should start
-        setTimeout(()=>{
-          const mv = bestMove(state.board, state.aiMark);
-          if(mv!=null) handleMove(mv, true);
-        }, 10);
-      }, 200);
+        setTimeout(function(){ var mv = bestMove(state.board, state.aiMark); if(mv!=null) handleMove(mv, true); }, 50);
       }
     }
 
     function startGame(){
       state.started = true;
-      $('#starter')?.remove();
+      var starter = $('#starter'); if(starter) starter.remove();
       enableBoard(true);
       statusMsg.textContent = 'Game started! X goes first.';
       reset();
     }
 
     $('#start').addEventListener('click', startGame);
-    $('#restart').addEventListener('click', ()=>{ if(!state.started) startGame(); else reset(); });
-    $('#undo').addEventListener('click', ()=>{
+    $('#restart').addEventListener('click', function(){ if(!state.started) startGame(); else reset(); });
+    $('#undo').addEventListener('click', function(){
       if(!state.started || !state.history.length || state.winner) return;
-      const mode = $('#mode').value;
-      const steps = (mode==='ai' && state.history.length>=2) ? 2 : 1;
-      for(let s=0;s<steps;s++){
-        const last = state.history.pop();
+      var mode = $('#mode').value;
+      var steps = (mode==='ai' && state.history.length>=2) ? 2 : 1;
+      for(var s=0;s<steps;s++){
+        var last = state.history.pop();
         if(last){ state.board[last.index] = null; state.xIsNext = (last.player==='X'); }
       }
-      state.winner = null; state.line = null; lineEl.hidden = true; render();
+      state.winner = null; state.line = null; if(lineEl) lineEl.style.opacity='0'; boardEl.classList.remove('finished'); render();
     });
 
-    $('#clearScores').addEventListener('click', ()=>{ state.scores = {X:0,O:0,T:0}; storage.set('ttt:scores', state.scores); updateScores(); });
-    $('#swapMarks').addEventListener('click', ()=>{
-      const oldPlayer = state.playerMark;
-      [state.playerMark, state.aiMark] = [state.aiMark, state.playerMark];
-      statusMsg.textContent = `You are now ${state.playerMark} (was ${oldPlayer}).`;
+    $('#clearScores').addEventListener('click', function(){ state.scores = {X:0,O:0,T:0}; storage.set('ttt:scores', state.scores); updateScores(); });
+    $('#swapMarks').addEventListener('click', function(){
+      var was = state.playerMark;
+      var tmp = state.playerMark; state.playerMark = state.aiMark; state.aiMark = tmp;
+      statusMsg.textContent = 'You are now '+state.playerMark+' (was '+was+').';
       if(state.started) reset();
     });
 
-    $('#mode').addEventListener('change', ()=>{ if(state.started) reset(); });
+    $('#mode').addEventListener('change', function(){ if(state.started) reset(); });
 
-    // ===== Theme =====
-    const themeToggle = $('#themeToggle');
-    const savedTheme = storage.get('ttt:theme', 'dark');
+    // Theme
+    var themeToggle = $('#themeToggle');
+    var savedTheme = storage.get('ttt:theme', 'dark');
     if(savedTheme==='light'){ document.body.classList.add('light'); themeToggle.checked = true; }
-    themeToggle.addEventListener('change', ()=>{
-      document.body.classList.toggle('light', themeToggle.checked);
-      storage.set('ttt:theme', themeToggle.checked ? 'light':'dark');
-    });
+    themeToggle.addEventListener('change', function(){ document.body.classList.toggle('light', themeToggle.checked); storage.set('ttt:theme', themeToggle.checked ? 'light':'dark'); });
 
-    // Smooth scroll to features
-    $('#scrollFeatures').addEventListener('click', ()=>{ document.querySelectorAll('main section')[1]?.scrollIntoView({ behavior:'smooth', block:'start' }); });
+    $('#scrollFeatures').addEventListener('click', function(){ var s = document.querySelectorAll('main section')[1]; if(s) s.scrollIntoView({ behavior:'smooth', block:'start' }); });
 
-    // Responsive recalculation of win line on resize
-    window.addEventListener('resize', ()=>{ if(state.winner && state.line) drawWinLine(state.line); });
+    window.addEventListener('resize', function(){ if(state.winner && state.line) drawWinLine(state.line); });
 
     // Init
     buildBoard();
@@ -538,50 +478,39 @@
 
     // ===== Self‑tests (non‑UI) =====
     (function runTests(){
-      const tests = [];
-      const assert = (name, cond) => { tests.push({name, pass: !!cond}); console.assert(cond, `❌ ${name}`); };
+      var tests = [];
+      function assert(name, cond){ tests.push({name:name, pass: !!cond}); if(!cond) console.error('Assertion failed: ❌ '+name); }
+      function eq(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
 
-      // checkWinner tests
+      // Winner detection
       assert('Row win detected', checkWinner(['X','X','X', null,null,null, null,null,null]).winner==='X');
       assert('Col win detected', checkWinner(['O',null,null, 'O',null,null, 'O',null,null]).winner==='O');
       assert('Diag win detected', checkWinner(['X',null,null, null,'X',null, null,null,'X']).winner==='X');
       assert('Draw detected', checkWinner(['X','O','X','X','O','O','O','X','X']).winner==='T');
-      assert('No win on empty board', checkWinner(Array(9).fill(null)).winner===null);
+      assert('No win on empty board', checkWinner([null,null,null,null,null,null,null,null,null]).winner===null);
 
-      // available tests
-      const av = available(['X',null,'O', null,null,null, 'O','X',null]);
-      assert('Available returns only null indexes', av.every(i => [1,3,4,5,8].includes(i)) && av.length===5);
+      // Available
+      var av = available(['X',null,'O', null,null,null, 'O','X',null]);
+      assert('Available returns only null indexes', av.length===5 && av.every(function(i){ return [1,3,4,5,8].indexOf(i)>-1; }));
 
-      // bestMove tests: force win for X
-      const board1 = ['X','X',null, null,'O',null, null,null,'O'];
-      const mv1 = bestMove(board1, 'X');
+      // Best move immediate win/block
+      var board1 = ['X','X',null, null,'O',null, null,null,'O'];
+      var mv1 = bestMove(board1, 'X');
       assert('Best move picks winning spot (index 2)', mv1===2);
 
-      // bestMove tests: must block X as O
-      const board2 = ['X','X',null, null,null,null, null,null,null];
-      const mv2 = bestMove(board2, 'O');
+      var board2 = ['X','X',null, null,null,null, null,null,null];
+      var mv2 = bestMove(board2, 'O');
       assert('Best move blocks opponent (index 2)', mv2===2);
 
-      // randomMove test: returns available
-      const mv3 = randomMove(['X','O','X', 'O',null,'X', null,'O',null]);
-      assert('Random move returns empty index', [4,6,8].includes(mv3));
-
-      // NEW: best opening move should be center when available
-      const mv4 = bestMove([null,null,null, null,null,null, null,null,null], 'X');
+      var mv4 = bestMove([null,null,null,null,null,null,null,null,null], 'X');
       assert('Best opening is center (index 4)', mv4===4);
 
-      // NEW: if opponent is about to win, AI must block
-      const mv5 = bestMove(['X','X',null, null,'O',null, null,null,'O'], 'O');
-      assert('AI blocks immediate threat (index 2)', mv5===2);
+      var res = checkWinner(['O','O','O', null,'X',null, 'X',null,'X']);
+      assert('Winner is O with top row', res.winner==='O' && eq(res.line,[0,1,2]));
 
-      // NEW: winner detection exact line
-      const res = checkWinner(['O','O','O', null,'X',null, 'X',null,'X']);
-      assert('Winner is O with top row', res.winner==='O' && JSON.stringify(res.line)==='[0,1,2]');
-
-      // Report badge
-      const passed = tests.filter(t=>t.pass).length;
-      const badge = document.getElementById('testBadge');
-      badge.textContent = `Self‑tests: ${passed}/${tests.length} passed`;
+      var passed = tests.filter(function(t){ return t.pass; }).length;
+      var badge = document.getElementById('testBadge');
+      badge.textContent = 'Self‑tests: '+passed+'/'+tests.length+' passed';
     })();
   </script>
 </body>
