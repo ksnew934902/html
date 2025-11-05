@@ -374,7 +374,7 @@
     function finishGame(winner, line){
       state.winner = winner; state.line = line;
       if(winner==='T'){ statusMsg.textContent = "Draw! Nobody wins."; state.scores.T++; }
-      else { statusMsg.textContent = `${winner} wins!`; (winner==='X'?state.scores.X:state.scores.O)++; }
+      else { statusMsg.textContent = `${winner} wins!`; if (winner === 'X') { state.scores.X++; } else { state.scores.O++; } }
       storage.set('ttt:scores', state.scores);
       drawWinLine(line);
       updateScores();
