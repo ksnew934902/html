@@ -528,6 +528,18 @@
       const mv3 = randomMove(['X','O','X', 'O',null,'X', null,'O',null]);
       assert('Random move returns empty index', [4,6,8].includes(mv3));
 
+      // NEW: best opening move should be center when available
+      const mv4 = bestMove([null,null,null, null,null,null, null,null,null], 'X');
+      assert('Best opening is center (index 4)', mv4===4);
+
+      // NEW: if opponent is about to win, AI must block
+      const mv5 = bestMove(['X','X',null, null,'O',null, null,null,'O'], 'O');
+      assert('AI blocks immediate threat (index 2)', mv5===2);
+
+      // NEW: winner detection exact line
+      const res = checkWinner(['O','O','O', null,'X',null, 'X',null,'X']);
+      assert('Winner is O with top row', res.winner==='O' && JSON.stringify(res.line)==='[0,1,2]');
+
       // Report badge
       const passed = tests.filter(t=>t.pass).length;
       const badge = document.getElementById('testBadge');
