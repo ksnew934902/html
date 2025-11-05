@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic‑Tac‑Toe • Beautiful One‑Pager</title>
+  <meta name="description" content="A polished one‑page website featuring an advanced Tic‑Tac‑Toe with PvP, AI, undo, history, themes, and delightful UI." />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: rgba(255,255,255,0.07);
+      --text: #ecf0ff;
+      --muted: #a7b0d6;
+      --primary: #7c93ff;
+      --primary-2: #a7ffde;
+      --accent: #ff9bd1;
+      --win: #a7ffde;
+      --lose: #ffb4b4;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+    .light {
+      --bg: #f7f8ff;
+      --surface: rgba(0,0,0,0.06);
+      --text: #0e1330;
+      --muted: #535a78;
+      --primary: #4256ff;
+      --primary-2: #0bb;
+      --accent: #d32cff;
+      --win: #0bb;
+      --lose: #ff4d4f;
+      --shadow: 0 8px 24px rgba(20,20,40,.12);
+    }
+
+    /* --- Global layout --- */
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 800px at 10% -10%, #1b2557, transparent),
+                  radial-gradient(800px 800px at 120% 10%, #3c1f4d, transparent),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin-inline: auto; padding: 24px; }
+
+    /* --- Header / Hero --- */
+    header.hero {
+      position: relative;
+      padding: 64px 0 32px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .orbital {
+      position: absolute; inset: -20vh -10vw auto auto; height: 70vh; width: 70vh;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 60%),
+                  radial-gradient(circle at 70% 70%, rgba(255,255,255,.05), transparent 60%);
+      border-radius: 50%; filter: blur(20px); opacity: .6; pointer-events: none;
+      animation: float 18s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100%{ transform: translateY(-6px) rotate(0deg); } 50%{ transform: translateY(6px) rotate(10deg);} }
+
+    h1.title { font-size: clamp(2rem, 5vw, 4rem); margin: 0 0 12px; letter-spacing: .5px; }
+    p.subtitle { margin: 0 auto; max-width: 900px; color: var(--muted); }
+
+    /* --- Glass cards --- */
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .grid {
+      display: grid; gap: 24px; grid-template-columns: repeat(12, 1fr);
+      align-items: start; margin-top: 32px;
+    }
+    .span-7 { grid-column: span 7; }
+    .span-5 { grid-column: span 5; }
+    @media (max-width: 1000px){ .span-7, .span-5 { grid-column: 1 / -1; } }
+
+    /* --- Controls --- */
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin: 18px 0 10px; }
+    .btn, .select {
+      appearance: none; border: 1px solid rgba(255,255,255,.2);
+      background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.02));
+      color: var(--text); padding: 10px 14px; border-radius: 14px; font-weight: 600;
+      box-shadow: var(--shadow); cursor: pointer; transition: .25s ease; outline: none; min-height: 42px;
+    }
+    .btn:hover, .select:hover { translate: 0 -2px; box-shadow: 0 14px 34px rgba(0,0,0,.28); }
+    .btn:active { translate: 0 0; }
+    .btn.primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #00131a; border: none; }
+    .btn.ghost { background: transparent; }
+    .select { padding-right: 40px; position: relative; }
+
+    .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+    .switch input { appearance: none; width: 48px; height: 28px; background: var(--surface); border: 1px solid rgba(255,255,255,.15); border-radius: 999px; position: relative; outline: none; transition: background .2s ease; }
+    .switch input::after { content: ""; position: absolute; inset: 4px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: transform .2s ease; }
+    .switch input:checked { background: linear-gradient(135deg, var(--primary), var(--primary-2)); }
+    .switch input:checked::after { transform: translateX(20px); }
+
+    /* --- Game --- */
+    .game-card { padding: 22px; }
+    .status { display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap: wrap; }
+    .status .msg { font-weight: 700; letter-spacing: .3px; }
+
+    .board {
+      margin: 18px auto 8px; width: min(92vw, 520px); aspect-ratio: 1/1; display: grid;
+      grid-template-columns: repeat(3, 1fr); gap: 10px; position: relative;
+    }
+    .cell {
+      display: grid; place-items: center; font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 900;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 18px; cursor: pointer; user-select: none; position: relative; isolation: isolate;
+      transition: transform .08s ease, background .25s ease, border-color .25s ease;
+    }
+    .cell:hover { transform: translateY(-2px); }
+    .cell[disabled] { cursor: not-allowed; opacity: .6; }
+
+    .cell .mark { filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+      background: radial-gradient(circle at 50% 35%, #fff, #ddd);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
+    .line {
+      position: absolute; height: 6px; background: linear-gradient(90deg, var(--accent), var(--primary-2));
+      border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.35); transform-origin: left center;
+      animation: sweep .55s ease forwards; opacity: 0; filter: saturate(1.2);
+    }
+    @keyframes sweep { from { width: 0; opacity: 0; } to { width: 100%; opacity: 1; } }
+
+    /* --- Sidebar --- */
+    .sidebar { padding: 20px; position: sticky; top: 20px; }
+    .kpi { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+    .kpi .pill { padding: 14px; text-align: center; border-radius: 14px; background: var(--surface); border: 1px solid rgba(255,255,255,.12); }
+    .kpi .pill .big { font-size: 1.6rem; font-weight: 900; }
+
+    .history { max-height: 280px; overflow: auto; padding-right: 6px; }
+    .history button { width: 100%; text-align:left; margin: 6px 0; }
+
+    /* --- Sections --- */
+    section { margin: 56px 0; }
+    h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 8px; }
+    p.lead { color: var(--muted); }
+
+    footer { margin: 72px 0 24px; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="orbital"></div>
+  <header class="hero">
+    <div class="container">
+      <h1 class="title">Tic‑Tac‑Toe, Reimagined</h1>
+      <p class="subtitle">A gorgeous, single‑page experience with an advanced on‑page game: PvP & AI, undo & history, win‑line animations, keyboard play, theming, and persistent scores. Built with vanilla HTML, CSS, and JavaScript — no libraries.</p>
+      <div class="controls" aria-label="Global controls">
+        <label class="switch" title="Toggle light/dark theme">
+          <span>Theme</span>
+          <input id="themeToggle" type="checkbox" aria-label="Toggle light/dark" />
+        </label>
+        <button class="btn ghost" id="scrollFeatures">Explore Features ↓</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <!-- Game Column -->
+      <section class="span-7 card game-card" aria-label="Tic Tac Toe game">
+        <div class="status">
+          <div class="msg" id="statusMsg">Ready? X goes first.</div>
+          <div class="controls">
+            <select class="select" id="mode">
+              <option value="pvp">Player vs Player</option>
+              <option value="ai">Player vs Computer</option>
+            </select>
+            <select class="select" id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="hard" selected>Hard</option>
+            </select>
+            <button class="btn" id="restart">Restart</button>
+            <button class="btn" id="undo">Undo</button>
+          </div>
+        </div>
+
+        <div class="board" id="board" role="grid" aria-label="Tic Tac Toe board">
+          <!-- Cells injected by JS for clean markup -->
+        </div>
+        <div id="line" class="line" hidden></div>
+        <div class="controls" style="justify-content: space-between;">
+          <small>Keyboard: arrows/WASD to move, Enter/Space to place</small>
+          <small id="turnHint">Turn: X</small>
+        </div>
+      </section>
+
+      <!-- Sidebar Column -->
+      <aside class="span-5 card sidebar" aria-label="Game summary and history">
+        <h2>Scoreboard</h2>
+        <div class="kpi">
+          <div class="pill"><div class="big" id="scoreX">0</div><div>Wins (X)</div></div>
+          <div class="pill"><div class="big" id="scoreO">0</div><div>Wins (O)</div></div>
+          <div class="pill"><div class="big" id="scoreT">0</div><div>Draws</div></div>
+        </div>
+        <div class="controls" style="justify-content:space-between;">
+          <button class="btn ghost" id="clearScores">Clear Scores</button>
+          <button class="btn ghost" id="swapMarks">Swap X/O</button>
+        </div>
+
+        <h2 style="margin-top:24px;">Move History</h2>
+        <div class="history" id="history" aria-live="polite"></div>
+      </aside>
+    </div>
+
+    <section>
+      <h2>How to Play</h2>
+      <p class="lead">Get three in a row — horizontally, vertically, or diagonally. Click or use the keyboard to place your mark. Play with a friend or challenge the computer on Easy (a bit clumsy) or Hard (ruthless with minimax + alpha‑beta pruning).</p>
+    </section>
+
+    <section>
+      <h2>Highlights</h2>
+      <ul>
+        <li>Beautiful glassmorphism UI with light/dark theme.</li>
+        <li>Smooth win‑line animation and responsive layout.</li>
+        <li>Undo & full move history with jump‑to state.</li>
+        <li>Sticky sidebar scoreboard with persistence via localStorage.</li>
+        <li>Keyboard accessibility and ARIA roles.</li>
+        <li>Clean, dependency‑free JavaScript.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Built with ♥, HTML, CSS, and JS. Enjoy the game!
+    </footer>
+  </main>
+
+  <script>
+    // ===== Utilities =====
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const storage = {
+      get(key, fallback){ try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback } },
+      set(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+    };
+
+    // ===== Game State =====
+    const state = {
+      board: Array(9).fill(null),
+      xIsNext: true,
+      history: [], // {index, player}
+      winner: null,
+      line: null,
+      lock: false, // prevent rapid clicks during AI move
+      scores: storage.get('ttt:scores', { X:0, O:0, T:0 }),
+      playerMark: 'X', // human as X by default
+      aiMark: 'O',
+    };
+
+    const boardEl = $('#board');
+    const lineEl = $('#line');
+    const statusMsg = $('#statusMsg');
+    const turnHint = $('#turnHint');
+
+    // ===== Build Board =====
+    function buildBoard(){
+      boardEl.innerHTML = '';
+      for(let i=0;i<9;i++){
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        btn.setAttribute('role','gridcell');
+        btn.setAttribute('aria-label', `Cell ${i+1}`);
+        btn.dataset.index = i;
+        btn.addEventListener('click', () => handleMove(i));
+        btn.addEventListener('keydown', (e) => handleKey(e, i));
+        boardEl.appendChild(btn);
+      }
+      render();
+    }
+
+    function handleKey(e, i){
+      const cols = 3; const rows = 3;
+      const r = Math.floor(i/cols), c = i%cols;
+      let ni = i;
+      if(['ArrowUp','w','W'].includes(e.key)) ni = ((r-1+rows)%rows)*cols + c;
+      else if(['ArrowDown','s','S'].includes(e.key)) ni = ((r+1)%rows)*cols + c;
+      else if(['ArrowLeft','a','A'].includes(e.key)) ni = r*cols + ((c-1+cols)%cols);
+      else if(['ArrowRight','d','D'].includes(e.key)) ni = r*cols + ((c+1)%cols);
+      else if(['Enter',' '].includes(e.key)) { e.preventDefault(); handleMove(i); return; }
+      if(ni!==i){ e.preventDefault(); const tgt = boardEl.children[ni]; tgt.focus(); }
+    }
+
+    // ===== Game Logic =====
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8], // rows
+      [0,3,6],[1,4,7],[2,5,8], // cols
+      [0,4,8],[2,4,6]          // diags
+    ];
+
+    function available(board){ return board.map((v,i)=>v?null:i).filter(v=>v!==null); }
+
+    function checkWinner(board){
+      for(const [a,b,c] of wins){
+        if(board[a] && board[a]===board[b] && board[b]===board[c]) return {winner: board[a], line:[a,b,c]};
+      }
+      if(board.every(Boolean)) return {winner:'T', line:null};
+      return {winner:null, line:null};
+    }
+
+    function handleMove(i){
+      if(state.lock || state.winner || state.board[i]) return;
+      const mark = state.xIsNext ? 'X' : 'O';
+      state.board[i] = mark;
+      state.history.push({ index:i, player:mark });
+      state.xIsNext = !state.xIsNext;
+      updateStatus();
+
+      const {winner, line} = checkWinner(state.board);
+      if(winner){ finishGame(winner, line); return; }
+
+      render();
+
+      // AI move if needed
+      const mode = $('#mode').value;
+      if(mode==='ai' && currentPlayer()===state.aiMark){
+        state.lock = true; // simulate thinking
+        setTimeout(()=>{
+          const move = ($('#difficulty').value==='hard') ? bestMove(state.board, state.aiMark) : randomMove(state.board);
+          if(move!=null){ handleMove(move); }
+          state.lock = false;
+        }, 220);
+      }
+    }
+
+    function currentPlayer(){ return state.xIsNext ? 'X' : 'O'; }
+
+    function randomMove(board){ const a = available(board); return a[Math.floor(Math.random()*a.length)] ?? null; }
+
+    // Minimax with alpha-beta
+    function bestMove(board, player){
+      const opponent = (p)=> p==='X' ? 'O' : 'X';
+      let best = { score: -Infinity, move: null };
+      for(const m of available(board)){
+        const b = board.slice(); b[m] = player;
+        const score = minimax(b, false, player, opponent(player), -Infinity, Infinity);
+        if(score > best.score){ best = { score, move: m }; }
+      }
+      return best.move;
+    }
+
+    function minimax(board, isMax, ai, human, alpha, beta){
+      const res = checkWinner(board);
+      if(res.winner){
+        if(res.winner===ai) return 10;
+        if(res.winner==='T') return 0;
+        return -10;
+      }
+      if(isMax){
+        let best = -Infinity;
+        for(const m of available(board)){
+          const b = board.slice(); b[m] = ai;
+          const score = minimax(b, false, ai, human, alpha, beta);
+          best = Math.max(best, score); alpha = Math.max(alpha, best); if(beta<=alpha) break;
+        }
+        return best;
+      } else {
+        let best = Infinity;
+        for(const m of available(board)){
+          const b = board.slice(); b[m] = human;
+          const score = minimax(b, true, ai, human, alpha, beta);
+          best = Math.min(best, score); beta = Math.min(beta, best); if(beta<=alpha) break;
+        }
+        return best;
+      }
+    }
+
+    function finishGame(winner, line){
+      state.winner = winner; state.line = line;
+      if(winner==='T'){ statusMsg.textContent = "Draw! Nobody wins."; state.scores.T++; }
+      else { statusMsg.textContent = `${winner} wins!`; (winner==='X'?state.scores.X:state.scores.O)++; }
+      storage.set('ttt:scores', state.scores);
+      drawWinLine(line);
+      updateScores();
+      render();
+    }
+
+    function drawWinLine(line){
+      if(!line){ lineEl.hidden = true; return; }
+      const pos = idx => boardEl.children[idx].getBoundingClientRect();
+      const b = boardEl.getBoundingClientRect();
+      // Calculate center points of winning cells relative to board
+      const pts = line.map(i=>{
+        const r = pos(i); return { x: r.left + r.width/2 - b.left, y: r.top + r.height/2 - b.top };
+      });
+      // Sort by x+y to get endpoints
+      pts.sort((p,q)=> (p.x+p.y)-(q.x+q.y));
+      const a = pts[0], c = pts[2];
+      const dx = c.x - a.x, dy = c.y - a.y; const len = Math.hypot(dx,dy);
+      const angle = Math.atan2(dy, dx) * 180/Math.PI;
+      Object.assign(lineEl.style, {
+        left: `${a.x}px`, top: `${a.y}px`, width: `${len}px`, transform: `rotate(${angle}deg)`
+      });
+      lineEl.hidden = false;
+    }
+
+    function updateScores(){
+      $('#scoreX').textContent = state.scores.X;
+      $('#scoreO').textContent = state.scores.O;
+      $('#scoreT').textContent = state.scores.T;
+    }
+
+    function render(){
+      // Render cells
+      state.board.forEach((v,i)=>{
+        const cell = boardEl.children[i];
+        cell.innerHTML = v ? `<span class="mark" aria-hidden="true">${v}</span>` : '';
+        cell.setAttribute('aria-disabled', !!v);
+        if(v) cell.setAttribute('disabled',''); else cell.removeAttribute('disabled');
+      });
+      // status
+      if(!state.winner){
+        statusMsg.textContent = `Your move: ${currentPlayer()}`;
+      }
+      turnHint.textContent = `Turn: ${currentPlayer()}`;
+      // history
+      renderHistory();
+    }
+
+    function renderHistory(){
+      const root = $('#history');
+      root.innerHTML = '';
+      state.history.forEach((m, idx)=>{
+        const b = document.createElement('button');
+        b.className = 'btn ghost';
+        b.textContent = `${idx+1}. ${m.player} at ${cellName(m.index)}`;
+        b.addEventListener('click', ()=> jumpTo(idx));
+        root.appendChild(b);
+      });
+    }
+    function cellName(i){ const r = Math.floor(i/3)+1, c = i%3+1; return `R${r}C${c}`; }
+
+    function jumpTo(histIndex){
+      // Rebuild board up to histIndex (inclusive)
+      state.board = Array(9).fill(null);
+      const moves = state.history.slice(0, histIndex+1);
+      moves.forEach(m=> state.board[m.index] = m.player );
+      state.xIsNext = (moves.length % 2 === 0) ? true : false; // next player after that move
+      state.winner = null; state.line = null; lineEl.hidden = true;
+      state.history = moves; // truncate future
+      render();
+    }
+
+    // ===== Controls =====
+    $('#restart').addEventListener('click', ()=>{ reset(); });
+    function reset(){
+      state.board = Array(9).fill(null);
+      state.xIsNext = true; state.history = []; state.winner = null; state.line = null;
+      lineEl.hidden = true; statusMsg.textContent = 'Ready? X goes first.'; render();
+      const mode = $('#mode').value;
+      // If AI mode and AI is X, let AI start
+      if(mode==='ai' && state.playerMark==='O'){ state.lock = true; setTimeout(()=>{ handleMove(bestMove(state.board, state.aiMark)); state.lock = false; }, 200); }
+    }
+
+    $('#undo').addEventListener('click', ()=>{
+      if(!state.history.length || state.winner) return;
+      // If AI mode and last two moves are human+ai, undo twice
+      const mode = $('#mode').value;
+      const steps = (mode==='ai' && state.history.length>=2) ? 2 : 1;
+      for(let s=0;s<steps;s++){
+        const last = state.history.pop();
+        if(last){ state.board[last.index] = null; state.xIsNext = (last.player==='X'); }
+      }
+      state.winner = null; state.line = null; lineEl.hidden = true; render();
+    });
+
+    $('#clearScores').addEventListener('click', ()=>{
+      state.scores = {X:0,O:0,T:0}; storage.set('ttt:scores', state.scores); updateScores();
+    });
+
+    $('#swapMarks').addEventListener('click', ()=>{
+      [state.playerMark, state.aiMark] = [state.aiMark, state.playerMark];
+      statusMsg.textContent = `You are now ${state.playerMark}.`;
+      reset();
+    });
+
+    $('#mode').addEventListener('change', ()=>{ reset(); });
+
+    // ===== Theme =====
+    const themeToggle = $('#themeToggle');
+    const savedTheme = storage.get('ttt:theme', 'dark');
+    if(savedTheme==='light'){ document.body.classList.add('light'); themeToggle.checked = true; }
+    themeToggle.addEventListener('change', ()=>{
+      document.body.classList.toggle('light', themeToggle.checked);
+      storage.set('ttt:theme', themeToggle.checked ? 'light':'dark');
+    });
+
+    // Smooth scroll to features
+    $('#scrollFeatures').addEventListener('click', ()=>{
+      document.querySelectorAll('main section')[1]?.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+
+    // Responsive recalculation of win line on resize
+    window.addEventListener('resize', ()=>{ if(state.winner && state.line) drawWinLine(state.line); });
+
+    // Init
+    buildBoard();
+    updateScores();
+  </script>
+</body>
+</html>
